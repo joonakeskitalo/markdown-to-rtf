@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Markdown to RTF</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="./normalize.css" />
+
+    <style>
+      body {
+        font-family: Inter, sans-serif;
+        height: 100vh;
+      }
+
+      .content-container {
+        display: flex;
+        justify-content: center;
+        height: 100%;
+      }
+
+      .content {
+        max-width: 1100px;
+        flex: 1;
+      }
+
+      .edit-area {
+        display: flex;
+        height: 80%;
+      }
+
+      .edit-area > div {
+        max-width: 550px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        margin: 0 8px;
+      }
+
+      .output {
+        background-color: #f9f9f9;
+        width: 100%;
+        height: 100%;
+        border-radius: 0.25em;
+        overflow-x: scroll;
+        text-wrap: wrap;
+        max-width: 100%;
+        max-width: 100%;
+        word-wrap: break-word;
+        font-size: 0.9em;
+      }
+
+      textarea:focus,
+      input:focus {
+        outline: none;
+      }
+
+      button {
+        appearance: none;
+        background-color: #fafbfc;
+        border: 1px solid rgba(27, 31, 35, 0.15);
+        border-radius: 6px;
+        box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0,
+          rgba(255, 255, 255, 0.25) 0 1px 0 inset;
+        box-sizing: border-box;
+        color: #24292e;
+        cursor: pointer;
+        display: inline-block;
+        font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial,
+          sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 20px;
+        list-style: none;
+        padding: 6px 16px;
+        position: relative;
+        transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        vertical-align: middle;
+        white-space: nowrap;
+        word-wrap: break-word;
+      }
+
+      button:hover {
+        background-color: #f3f4f6;
+        text-decoration: none;
+        transition-duration: 0.1s;
+      }
+
+      button:disabled {
+        background-color: #fafbfc;
+        border-color: rgba(27, 31, 35, 0.15);
+        color: #959da5;
+        cursor: default;
+      }
+
+      button:active {
+        background-color: #edeff2;
+        box-shadow: rgba(225, 228, 232, 0.2) 0 1px 0 inset;
+        transition: none 0s;
+      }
+
+      button:focus {
+        outline: 1px transparent;
+      }
+
+      button:before {
+        display: none;
+      }
+
+      button:-webkit-details-marker {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content-container">
+      <div class="content">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-right: 16px;
+          "
+        >
+          <h1>Markdown to RTF</h1>
+          <div>
+            <button onclick="copy()">Copy RTF</button>
+          </div>
+        </div>
+
+        <div class="edit-area">
+          <div>
+            <b>Input</b>
+            <textarea
+              style="
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 2px;
+                resize: none;
+                border-radius: 0.25em;
+              "
+              oninput="debouncedParse()"
+              id="markdown-input"
+            ></textarea>
+          </div>
+
+          <div>
+            <b>Output</b>
+
+            <div class="output" id="output"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    const markdownInput = document.getElementById("markdown-input");
+    const output = document.getElementById("output");
+
+    const debounce = (func, timeout = 300) => {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          func.apply(this, args);
+        }, timeout);
+      };
+    };
+
+    const parse = () => {
+      output.innerHTML = marked.parse(markdownInput.value, {
+        breaks: true,
+        gfm: true,
+      });
+    };
+
+    const copy = () => {
+      parse();
+      navigator.clipboard.write([
+        new ClipboardItem({
+          "text/plain": new Blob([output.innerText], { type: "text/plain" }),
+          "text/html": new Blob([output.innerHTML], { type: "text/html" }),
+        }),
+      ]);
+    };
+
+    const debouncedParse = debounce(parse, 300);
+  </script>
+</html>
