@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Markdown to RTF</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
     <link rel="stylesheet" href="./normalize.css" />
 
     <style>
@@ -34,7 +39,6 @@
       }
 
       .edit-area > div {
-        max-width: 550px;
         display: flex;
         flex-direction: column;
         flex: 1;
@@ -137,7 +141,6 @@
 
         <div class="edit-area">
           <div>
-            <b>Input</b>
             <textarea
               style="
                 width: 100%;
@@ -152,7 +155,7 @@
             ></textarea>
           </div>
 
-          <div>
+          <div style="display: none">
             <b>Output</b>
 
             <div class="output" id="output"></div>
@@ -162,21 +165,24 @@
     </div>
   </body>
   <script>
-    const markdownInput = document.getElementById("markdown-input");
     const output = document.getElementById("output");
 
-    const debounce = (func, timeout = 300) => {
-      let timer;
-      return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-          func.apply(this, args);
-        }, timeout);
-      };
-    };
+    const easyMDE = new EasyMDE({
+      element: document.getElementById("markdown-input"),
+      hideIcons: ["image"],
+      minHeight: "500px",
+      spellChecker: false,
+      autofocus: true,
+      sideBySideFullscreen: false,
+      renderingConfig: {
+        singleLineBreaks: true,
+      },
+    });
+
+    easyMDE.toggleSideBySide();
 
     const parse = () => {
-      output.innerHTML = marked.parse(markdownInput.value, {
+      output.innerHTML = marked.parse(easyMDE.value(), {
         breaks: true,
         gfm: true,
       });
@@ -191,7 +197,5 @@
         }),
       ]);
     };
-
-    const debouncedParse = debounce(parse, 300);
   </script>
 </html>
