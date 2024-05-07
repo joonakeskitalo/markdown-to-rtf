@@ -33,18 +33,6 @@
         flex: 1;
       }
 
-      .edit-area {
-        display: flex;
-        height: 80%;
-      }
-
-      .edit-area > div {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        margin: 0 8px;
-      }
-
       .output {
         background-color: #f9f9f9;
         width: 100%;
@@ -139,27 +127,18 @@
           </div>
         </div>
 
-        <div class="edit-area">
-          <div>
-            <textarea
-              style="
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                padding: 2px;
-                resize: none;
-                border-radius: 0.25em;
-              "
-              oninput="debouncedParse()"
-              id="markdown-input"
-            ></textarea>
-          </div>
+        <div>
+          <textarea
+            style="margin: 0; padding: 2px; resize: none; border-radius: 0.25em"
+            oninput="debouncedParse()"
+            id="markdown-input"
+          ></textarea>
+        </div>
 
-          <div style="display: none">
-            <b>Output</b>
+        <div style="display: none">
+          <b>Output</b>
 
-            <div class="output" id="output"></div>
-          </div>
+          <div class="output" id="output"></div>
         </div>
       </div>
     </div>
