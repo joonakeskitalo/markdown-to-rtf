@@ -182,6 +182,10 @@
       },
     });
 
+    const stripHtmlComments = (str) => {
+      return str.replace(/<\!--.*?-->/g, "");
+    };
+
     easyMDE.toggleSideBySide();
 
     const parse = () => {
@@ -193,10 +197,11 @@
 
     const copy = () => {
       parse();
+      const withoutComments = stripHtmlComments(output.innerHTML);
       navigator.clipboard.write([
         new ClipboardItem({
           "text/plain": new Blob([output.innerText], { type: "text/plain" }),
-          "text/html": new Blob([output.innerHTML], { type: "text/html" }),
+          "text/html": new Blob([withoutComments], { type: "text/html" }),
         }),
       ]);
     };
