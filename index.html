@@ -121,7 +121,8 @@
         <h1>Markdown to RTF</h1>
         <div>
           <button onclick="rtfToMarkdown()">Paste RTF as Markdown</button>
-          <button onclick="copy()">Copy RTF</button>
+          <button onclick="copy(false)">Copy RTF</button>
+          <button onclick="copy(true)">Copy RTF with linebreaks</button>
         </div>
       </div>
 
@@ -132,7 +133,6 @@
 
       <div style="display: none">
         <b>Output</b>
-
         <div class="output" id="output"></div>
       </div>
     </div>
@@ -1036,8 +1036,6 @@
 
 </script>
 
-
-
 <script>
   // http://pandoc.org/README.html#pandocs-markdown
   const pandoc = [
@@ -1216,15 +1214,31 @@
     }
   }
 
-  const parse = () => {
-    output.innerHTML = marked.parse(easyMDE.value(), {
+  const parse = (addBreaks = false) => {
+    const html = marked.parse(easyMDE.value(), {
       breaks: true,
       gfm: true,
     });
+
+    const result = addBreaks
+      ? html.replaceAll("</pre>", "</pre><br/>")
+        .replaceAll("</p>\n<p>", "</p><br/><p>")
+        .replaceAll("\n<h1>", "<br/><h1>")
+        .replaceAll("\n<h2>", "<br/><h2>")
+        .replaceAll("\n<h3>", "<br/><h3>")
+        .replaceAll("\n<h4>", "<br/><h4>")
+        .replaceAll("\n<h5>", "<br/><h5>")
+        .replaceAll("\n<h6>", "<br/><h6>")
+        .replaceAll("</p>\n<strong>\n", "</p><br/><strong>")
+        .replaceAll("</ul>\n<p>", "</ul><br/><p>")
+        .replaceAll("</strong></p><br/><p>", "</strong></p><p>")
+      : html
+
+    output.innerHTML = result
   };
 
-  const copy = () => {
-    parse();
+  const copy = (addBreaks = false) => {
+    parse(addBreaks);
     const withoutComments = stripHtmlComments(output.innerHTML);
     navigator.clipboard.write([
       new ClipboardItem({
