@@ -194,11 +194,14 @@
               </div>
             </div>
             <button class="button" onclick="rtfToMarkdown()">
-              Paste RTF as Markdown
+              Paste as Markdown
             </button>
             <button class="button" onclick="copy(false)">Copy RTF</button>
             <button class="button" onclick="copy(true)">
               Copy RTF with linebreaks
+            </button>
+            <button class="button" onclick="copy(true, true)">
+              Copy for Slack
             </button>
           </div>
         </div>
@@ -1220,7 +1223,6 @@
   </script>
 
   <script>
-    // http://pandoc.org/README.html#pandocs-markdown
     const pandoc = [
       {
         filter: "h1",
@@ -1373,7 +1375,7 @@
       showIcons: ["code", "table"],
       minHeight: "500px",
       maxHeight: "750px",
-      spellChecker: true,
+      spellChecker: false,
       autofocus: true,
       sideBySideFullscreen: false,
       unorderedListStyle: "-",
@@ -1424,13 +1426,13 @@
       }
     };
 
-    const parse = (addBreaks = false) => {
+    const parse = (addBreaks = false, removeHeadings = false) => {
       const html = marked.parse(easyMDE.value(), {
         breaks: true,
         gfm: true,
       });
 
-      const result = addBreaks
+      const _result = addBreaks
         ? html
             .replaceAll("</pre>", "</pre><br/>")
             .replaceAll("</p>\n<p>", "</p><br/><p>")
@@ -1445,11 +1447,27 @@
             .replaceAll("</strong></p><br/><p>", "</strong></p><p>")
         : html;
 
+      const result = removeHeadings
+        ? _result
+            .replaceAll("<h1>", "<b>")
+            .replaceAll("</h1>", "</b>")
+            .replaceAll("<h2>", "<b>")
+            .replaceAll("</h2>", "</b>")
+            .replaceAll("<h3>", "<b>")
+            .replaceAll("</h3>", "</b>")
+            .replaceAll("<h4>", "<b>")
+            .replaceAll("</h4>", "</b>")
+            .replaceAll("<h5>", "<b>")
+            .replaceAll("</h5>", "</b>")
+            .replaceAll("<h6>", "<b>")
+            .replaceAll("</h6>", "</b>")
+        : _result;
+
       output.innerHTML = result;
     };
 
-    const copy = (addBreaks = false) => {
-      parse(addBreaks);
+    const copy = (addBreaks = false, removeHeadings = false) => {
+      parse(addBreaks, removeHeadings);
       const withoutComments = stripHtmlComments(output.innerHTML);
       navigator.clipboard.write([
         new ClipboardItem({
