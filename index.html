@@ -1450,17 +1450,17 @@
       const result = removeHeadings
         ? _result
             .replaceAll("<h1>", "<b>")
-            .replaceAll("</h1>", "</b>")
+            .replaceAll("</h1>", "</b><br/>")
             .replaceAll("<h2>", "<b>")
-            .replaceAll("</h2>", "</b>")
+            .replaceAll("</h2>", "</b><br/>")
             .replaceAll("<h3>", "<b>")
-            .replaceAll("</h3>", "</b>")
+            .replaceAll("</h3>", "</b><br/>")
             .replaceAll("<h4>", "<b>")
-            .replaceAll("</h4>", "</b>")
+            .replaceAll("</h4>", "</b><br/>")
             .replaceAll("<h5>", "<b>")
-            .replaceAll("</h5>", "</b>")
+            .replaceAll("</h5>", "</b><br/>")
             .replaceAll("<h6>", "<b>")
-            .replaceAll("</h6>", "</b>")
+            .replaceAll("</h6>", "</b><br/>")
         : _result;
 
       output.innerHTML = result;
