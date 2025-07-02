@@ -1,1338 +1,1462 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Markdown to RTF</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <link rel="stylesheet" href="./normalize.css" />
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Markdown to RTF</title>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
-  <link rel="stylesheet" href="./normalize.css" />
+    <style>
+      body {
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+          "Helvetica Neue", sans-serif;
+        height: 100vh;
+      }
 
-  <style>
-    body {
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
-        "Helvetica Neue", sans-serif;
-      height: 100vh;
-    }
+      .content-container {
+        display: flex;
+        justify-content: center;
+        height: 100%;
+        margin: 0 8px;
+        box-sizing: content-box;
+      }
 
-    .content-container {
-      display: flex;
-      justify-content: center;
-      height: 100%;
-      margin: 0 8px;
-      box-sizing: content-box;
-    }
+      .content {
+        max-width: 1100px;
+        flex: 1;
+      }
 
-    .content {
-      max-width: 1100px;
-      flex: 1;
-    }
+      .output {
+        background-color: #f9f9f9;
+        width: 100%;
+        height: 100%;
+        border-radius: 0.25em;
+        overflow-x: scroll;
+        text-wrap: wrap;
+        max-width: 100%;
+        max-width: 100%;
+        word-wrap: break-word;
+      }
 
-    .output {
-      background-color: #f9f9f9;
-      width: 100%;
-      height: 100%;
-      border-radius: 0.25em;
-      overflow-x: scroll;
-      text-wrap: wrap;
-      max-width: 100%;
-      max-width: 100%;
-      word-wrap: break-word;
-    }
+      textarea:focus,
+      input:focus {
+        outline: none;
+      }
 
-    textarea:focus,
-    input:focus {
-      outline: none;
-    }
+      .button {
+        appearance: none;
+        background-color: #fafbfc;
+        border: 1px solid rgba(27, 31, 35, 0.15);
+        border-radius: 6px;
+        box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0,
+          rgba(255, 255, 255, 0.25) 0 1px 0 inset;
+        box-sizing: border-box;
+        color: #24292e;
+        cursor: pointer;
+        display: inline-block;
+        font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial,
+          sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 20px;
+        list-style: none;
+        padding: 6px 16px;
+        position: relative;
+        transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        vertical-align: middle;
+        white-space: nowrap;
+        word-wrap: break-word;
+      }
 
-    .button {
-      appearance: none;
-      background-color: #fafbfc;
-      border: 1px solid rgba(27, 31, 35, 0.15);
-      border-radius: 6px;
-      box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0,
-        rgba(255, 255, 255, 0.25) 0 1px 0 inset;
-      box-sizing: border-box;
-      color: #24292e;
-      cursor: pointer;
-      display: inline-block;
-      font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial,
-        sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-      font-size: 14px;
-      font-weight: 500;
-      line-height: 20px;
-      list-style: none;
-      padding: 6px 16px;
-      position: relative;
-      transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
-      vertical-align: middle;
-      white-space: nowrap;
-      word-wrap: break-word;
-    }
+      .button:hover {
+        background-color: #f3f4f6;
+        text-decoration: none;
+        transition-duration: 0.1s;
+      }
 
-    .button:hover {
-      background-color: #f3f4f6;
-      text-decoration: none;
-      transition-duration: 0.1s;
-    }
+      .button:disabled {
+        background-color: #fafbfc;
+        border-color: rgba(27, 31, 35, 0.15);
+        color: #959da5;
+        cursor: default;
+      }
 
-    .button:disabled {
-      background-color: #fafbfc;
-      border-color: rgba(27, 31, 35, 0.15);
-      color: #959da5;
-      cursor: default;
-    }
+      .button:active {
+        background-color: #edeff2;
+        box-shadow: rgba(225, 228, 232, 0.2) 0 1px 0 inset;
+        transition: none 0s;
+      }
 
-    .button:active {
-      background-color: #edeff2;
-      box-shadow: rgba(225, 228, 232, 0.2) 0 1px 0 inset;
-      transition: none 0s;
-    }
+      .button:focus {
+        outline: 1px transparent;
+      }
 
-    .button:focus {
-      outline: 1px transparent;
-    }
+      .button:before {
+        display: none;
+      }
 
-    .button:before {
-      display: none;
-    }
+      .button:-webkit-details-marker {
+        display: none;
+      }
 
-    .button:-webkit-details-marker {
-      display: none;
-    }
+      .dropdown {
+        position: relative;
+        display: inline-block;
+      }
 
-    .dropdown {
-      position: relative;
-      display: inline-block;
-    }
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+        border-radius: 6px;
+        overflow: hidden;
+      }
 
-    .dropdown-content {
-      display: none;
-      position: absolute;
-      background-color: #f9f9f9;
-      min-width: 160px;
-      box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-      z-index: 10;
-      border-radius: 6px;
-      overflow: hidden;
-    }
+      .dropdown-content button {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        width: 100%;
+        border: none;
+        text-align: left;
+        background-color: #fafbfc;
+        font-size: 10pt;
+      }
 
-    .dropdown-content button {
-      color: black;
-      padding: 12px 16px;
-      text-decoration: none;
-      display: block;
-      width: 100%;
-      border: none;
-      text-align: left;
-      background-color: #fafbfc;
-      font-size: 10pt;
-    }
+      .dropdown-content button:hover {
+        background-color: #f3f4f6;
+      }
 
-    .dropdown-content button:hover {
-      background-color: #f3f4f6
-    }
+      .dropdown:hover .dropdown-content {
+        display: block;
+      }
 
-    .dropdown:hover .dropdown-content {
-      display: block;
-    }
+      .cm-header.cm-header-1 {
+        font-size: 28px !important;
+      }
 
-    .cm-header.cm-header-1 {
-      font-size: 28px !important;
-    }
+      .cm-header.cm-header-2 {
+        font-size: 22px !important;
+      }
 
-    .cm-header.cm-header-2 {
-      font-size: 22px !important;
-    }
+      .cm-header.cm-header-3 {
+        font-size: 20px !important;
+      }
 
-    .cm-header.cm-header-3 {
-      font-size: 20px !important;
-    }
+      .cm-header.cm-header-4 {
+        font-size: 18px !important;
+      }
 
-    .cm-header.cm-header-4 {
-      font-size: 18px !important;
-    }
+      .cm-header.cm-header-5 {
+        font-size: 16px !important;
+      }
 
-    .cm-header.cm-header-5 {
-      font-size: 16px !important;
-    }
+      .cm-header.cm-header-6 {
+        font-size: 14px !important;
+      }
+    </style>
+  </head>
 
-    .cm-header.cm-header-6 {
-      font-size: 14px !important;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="content-container">
-    <div class="content">
-      <div style="
+  <body>
+    <div class="content-container">
+      <div class="content">
+        <div
+          style="
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin: 0 16px 0 8px;
-          ">
-        <h1>Markdown to RTF</h1>
-        <div>
-          <div class="dropdown">
-            <button class="dropbtn button">Presets…</button>
-            <div class="dropdown-content">
-              <button onclick="templates.daily()">Daily</button>
-              <button onclick="templates.meetingNotes()">Meeting notes</button>
+          "
+        >
+          <h1>Markdown to RTF</h1>
+          <div>
+            <div class="dropdown">
+              <button class="dropbtn button">Presets…</button>
+              <div class="dropdown-content">
+                <button onclick="templates.daily()">Daily</button>
+                <button onclick="templates.meetingNotes()">
+                  Meeting notes
+                </button>
+              </div>
             </div>
+            <button class="button" onclick="rtfToMarkdown()">
+              Paste RTF as Markdown
+            </button>
+            <button class="button" onclick="copy(false)">Copy RTF</button>
+            <button class="button" onclick="copy(true)">
+              Copy RTF with linebreaks
+            </button>
           </div>
-          <button class="button" onclick="rtfToMarkdown()">Paste RTF as Markdown</button>
-          <button class="button" onclick="copy(false)">Copy RTF</button>
-          <button class="button" onclick="copy(true)">Copy RTF with linebreaks</button>
+        </div>
+
+        <div>
+          <textarea
+            style="margin: 0; padding: 2px; resize: none; border-radius: 0.25em"
+            oninput="debouncedParse()"
+            id="markdown-input"
+          ></textarea>
+        </div>
+
+        <div style="display: none">
+          <b>Output</b>
+          <div class="output" id="output"></div>
         </div>
       </div>
-
-      <div>
-        <textarea style="margin: 0; padding: 2px; resize: none; border-radius: 0.25em" oninput="debouncedParse()"
-          id="markdown-input"></textarea>
-      </div>
-
-      <div style="display: none">
-        <b>Output</b>
-        <div class="output" id="output"></div>
-      </div>
     </div>
-  </div>
-</body>
+  </body>
 
-<script>
-  (function (f) {
-    if (typeof exports === "object" && typeof module !== "undefined") {
-      module.exports = f();
-    } else if (typeof define === "function" && define.amd) {
-      define([], f);
-    } else {
-      var g;
-      if (typeof window !== "undefined") {
-        g = window;
-      } else if (typeof global !== "undefined") {
-        g = global;
-      } else if (typeof self !== "undefined") {
-        g = self;
+  <script>
+    (function (f) {
+      if (typeof exports === "object" && typeof module !== "undefined") {
+        module.exports = f();
+      } else if (typeof define === "function" && define.amd) {
+        define([], f);
       } else {
-        g = this;
-      }
-      g.toMarkdown = f();
-    }
-  })(function () {
-    var define, module, exports;
-    return (function e(t, n, r) {
-      function s(o, u) {
-        if (!n[o]) {
-          if (!t[o]) {
-            var a = typeof require == "function" && require;
-            if (!u && a) return a(o, !0);
-            if (i) return i(o, !0);
-            var f = new Error("Cannot find module '" + o + "'");
-            throw ((f.code = "MODULE_NOT_FOUND"), f);
-          }
-          var l = (n[o] = { exports: {} });
-          t[o][0].call(
-            l.exports,
-            function (e) {
-              var n = t[o][1][e];
-              return s(n ? n : e);
-            },
-            l,
-            l.exports,
-            e,
-            t,
-            n,
-            r,
-          );
+        var g;
+        if (typeof window !== "undefined") {
+          g = window;
+        } else if (typeof global !== "undefined") {
+          g = global;
+        } else if (typeof self !== "undefined") {
+          g = self;
+        } else {
+          g = this;
         }
-        return n[o].exports;
+        g.toMarkdown = f();
       }
-      var i = typeof require == "function" && require;
-      for (var o = 0; o < r.length; o++) s(r[o]);
-      return s;
-    })(
-      {
-        1: [
-          function (require, module, exports) {
-            /*
-             * to-markdown - an HTML to Markdown converter
-             *
-             * Copyright 2011+, Dom Christie
-             * Licenced under the MIT licence
-             *
-             */
-
-            "use strict";
-
-            var toMarkdown;
-            var converters;
-            var mdConverters = require("./lib/md-converters");
-            var gfmConverters = require("./lib/gfm-converters");
-            var HtmlParser = require("./lib/html-parser");
-            var collapse = require("collapse-whitespace");
-
-            /*
-             * Utilities
-             */
-
-            var blocks = [
-              "address",
-              "article",
-              "aside",
-              "audio",
-              "blockquote",
-              "body",
-              "canvas",
-              "center",
-              "dd",
-              "dir",
-              "div",
-              "dl",
-              "dt",
-              "fieldset",
-              "figcaption",
-              "figure",
-              "footer",
-              "form",
-              "frameset",
-              "h1",
-              "h2",
-              "h3",
-              "h4",
-              "h5",
-              "h6",
-              "header",
-              "hgroup",
-              "hr",
-              "html",
-              "isindex",
-              "li",
-              "main",
-              "menu",
-              "nav",
-              "noframes",
-              "noscript",
-              "ol",
-              "output",
-              "p",
-              "pre",
-              "section",
-              "table",
-              "tbody",
-              "td",
-              "tfoot",
-              "th",
-              "thead",
-              "tr",
-              "ul",
-            ];
-
-            function isBlock(node) {
-              return blocks.indexOf(node.nodeName.toLowerCase()) !== -1;
+    })(function () {
+      var define, module, exports;
+      return (function e(t, n, r) {
+        function s(o, u) {
+          if (!n[o]) {
+            if (!t[o]) {
+              var a = typeof require == "function" && require;
+              if (!u && a) return a(o, !0);
+              if (i) return i(o, !0);
+              var f = new Error("Cannot find module '" + o + "'");
+              throw ((f.code = "MODULE_NOT_FOUND"), f);
             }
+            var l = (n[o] = { exports: {} });
+            t[o][0].call(
+              l.exports,
+              function (e) {
+                var n = t[o][1][e];
+                return s(n ? n : e);
+              },
+              l,
+              l.exports,
+              e,
+              t,
+              n,
+              r
+            );
+          }
+          return n[o].exports;
+        }
+        var i = typeof require == "function" && require;
+        for (var o = 0; o < r.length; o++) s(r[o]);
+        return s;
+      })(
+        {
+          1: [
+            function (require, module, exports) {
+              /*
+               * to-markdown - an HTML to Markdown converter
+               *
+               * Copyright 2011+, Dom Christie
+               * Licenced under the MIT licence
+               *
+               */
 
-            var voids = ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"];
+              "use strict";
 
-            function isVoid(node) {
-              return voids.indexOf(node.nodeName.toLowerCase()) !== -1;
-            }
+              var toMarkdown;
+              var converters;
+              var mdConverters = require("./lib/md-converters");
+              var gfmConverters = require("./lib/gfm-converters");
+              var HtmlParser = require("./lib/html-parser");
+              var collapse = require("collapse-whitespace");
 
-            function htmlToDom(string) {
-              var tree = new HtmlParser().parseFromString(string, "text/html");
-              collapse(tree.documentElement, isBlock);
-              return tree;
-            }
+              /*
+               * Utilities
+               */
 
-            /*
-             * Flattens DOM tree into single array
-             */
+              var blocks = [
+                "address",
+                "article",
+                "aside",
+                "audio",
+                "blockquote",
+                "body",
+                "canvas",
+                "center",
+                "dd",
+                "dir",
+                "div",
+                "dl",
+                "dt",
+                "fieldset",
+                "figcaption",
+                "figure",
+                "footer",
+                "form",
+                "frameset",
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6",
+                "header",
+                "hgroup",
+                "hr",
+                "html",
+                "isindex",
+                "li",
+                "main",
+                "menu",
+                "nav",
+                "noframes",
+                "noscript",
+                "ol",
+                "output",
+                "p",
+                "pre",
+                "section",
+                "table",
+                "tbody",
+                "td",
+                "tfoot",
+                "th",
+                "thead",
+                "tr",
+                "ul",
+              ];
 
-            function bfsOrder(node) {
-              var inqueue = [node];
-              var outqueue = [];
-              var elem;
-              var children;
-              var i;
-
-              while (inqueue.length > 0) {
-                elem = inqueue.shift();
-                outqueue.push(elem);
-                children = elem.childNodes;
-                for (i = 0; i < children.length; i++) {
-                  if (children[i].nodeType === 1) inqueue.push(children[i]);
-                }
-              }
-              outqueue.shift();
-              return outqueue;
-            }
-
-            /*
-             * Contructs a Markdown string of replacement text for a given node
-             */
-
-            function getContent(node) {
-              var text = "";
-              for (var i = 0; i < node.childNodes.length; i++) {
-                if (node.childNodes[i].nodeType === 1) {
-                  text += node.childNodes[i]._replacement;
-                } else if (node.childNodes[i].nodeType === 3) {
-                  text += node.childNodes[i].data;
-                } else continue;
-              }
-              return text;
-            }
-
-            /*
-             * Returns the HTML string of an element with its contents converted
-             */
-
-            function outer(node, content) {
-              return node.cloneNode(false).outerHTML.replace("><", ">" + content + "<");
-            }
-
-            function canConvert(node, filter) {
-              if (typeof filter === "string") {
-                return filter === node.nodeName.toLowerCase();
-              }
-              if (Array.isArray(filter)) {
-                return filter.indexOf(node.nodeName.toLowerCase()) !== -1;
-              } else if (typeof filter === "function") {
-                return filter.call(toMarkdown, node);
-              } else {
-                throw new TypeError("`filter` needs to be a string, array, or function");
-              }
-            }
-
-            function isFlankedByWhitespace(side, node) {
-              var sibling;
-              var regExp;
-              var isFlanked;
-
-              if (side === "left") {
-                sibling = node.previousSibling;
-                regExp = / $/;
-              } else {
-                sibling = node.nextSibling;
-                regExp = /^ /;
+              function isBlock(node) {
+                return blocks.indexOf(node.nodeName.toLowerCase()) !== -1;
               }
 
-              if (sibling) {
-                if (sibling.nodeType === 3) {
-                  isFlanked = regExp.test(sibling.nodeValue);
-                } else if (sibling.nodeType === 1 && !isBlock(sibling)) {
-                  isFlanked = regExp.test(sibling.textContent);
-                }
-              }
-              return isFlanked;
-            }
+              var voids = [
+                "area",
+                "base",
+                "br",
+                "col",
+                "command",
+                "embed",
+                "hr",
+                "img",
+                "input",
+                "keygen",
+                "link",
+                "meta",
+                "param",
+                "source",
+                "track",
+                "wbr",
+              ];
 
-            function flankingWhitespace(node) {
-              var leading = "";
-              var trailing = "";
-
-              if (!isBlock(node)) {
-                var hasLeading = /^[ \r\n\t]/.test(node.innerHTML);
-                var hasTrailing = /[ \r\n\t]$/.test(node.innerHTML);
-
-                if (hasLeading && !isFlankedByWhitespace("left", node)) {
-                  leading = " ";
-                }
-                if (hasTrailing && !isFlankedByWhitespace("right", node)) {
-                  trailing = " ";
-                }
+              function isVoid(node) {
+                return voids.indexOf(node.nodeName.toLowerCase()) !== -1;
               }
 
-              return { leading: leading, trailing: trailing };
-            }
-
-            /*
-             * Finds a Markdown converter, gets the replacement, and sets it on
-             * `_replacement`
-             */
-
-            function process(node) {
-              var replacement;
-              var content = getContent(node);
-
-              // Remove blank nodes
-              if (!isVoid(node) && !/A|TH|TD/.test(node.nodeName) && /^\s*$/i.test(content)) {
-                node._replacement = "";
-                return;
+              function htmlToDom(string) {
+                var tree = new HtmlParser().parseFromString(
+                  string,
+                  "text/html"
+                );
+                collapse(tree.documentElement, isBlock);
+                return tree;
               }
 
-              for (var i = 0; i < converters.length; i++) {
-                var converter = converters[i];
+              /*
+               * Flattens DOM tree into single array
+               */
 
-                if (canConvert(node, converter.filter)) {
-                  if (typeof converter.replacement !== "function") {
-                    throw new TypeError("`replacement` needs to be a function that returns a string");
+              function bfsOrder(node) {
+                var inqueue = [node];
+                var outqueue = [];
+                var elem;
+                var children;
+                var i;
+
+                while (inqueue.length > 0) {
+                  elem = inqueue.shift();
+                  outqueue.push(elem);
+                  children = elem.childNodes;
+                  for (i = 0; i < children.length; i++) {
+                    if (children[i].nodeType === 1) inqueue.push(children[i]);
                   }
+                }
+                outqueue.shift();
+                return outqueue;
+              }
 
-                  var whitespace = flankingWhitespace(node);
+              /*
+               * Contructs a Markdown string of replacement text for a given node
+               */
 
-                  if (whitespace.leading || whitespace.trailing) {
-                    content = content.trim();
-                  }
-                  replacement = whitespace.leading + converter.replacement.call(toMarkdown, content, node) + whitespace.trailing;
-                  break;
+              function getContent(node) {
+                var text = "";
+                for (var i = 0; i < node.childNodes.length; i++) {
+                  if (node.childNodes[i].nodeType === 1) {
+                    text += node.childNodes[i]._replacement;
+                  } else if (node.childNodes[i].nodeType === 3) {
+                    text += node.childNodes[i].data;
+                  } else continue;
+                }
+                return text;
+              }
+
+              /*
+               * Returns the HTML string of an element with its contents converted
+               */
+
+              function outer(node, content) {
+                return node
+                  .cloneNode(false)
+                  .outerHTML.replace("><", ">" + content + "<");
+              }
+
+              function canConvert(node, filter) {
+                if (typeof filter === "string") {
+                  return filter === node.nodeName.toLowerCase();
+                }
+                if (Array.isArray(filter)) {
+                  return filter.indexOf(node.nodeName.toLowerCase()) !== -1;
+                } else if (typeof filter === "function") {
+                  return filter.call(toMarkdown, node);
+                } else {
+                  throw new TypeError(
+                    "`filter` needs to be a string, array, or function"
+                  );
                 }
               }
 
-              node._replacement = replacement;
-            }
+              function isFlankedByWhitespace(side, node) {
+                var sibling;
+                var regExp;
+                var isFlanked;
 
-            toMarkdown = function (input, options) {
-              options = options || {};
+                if (side === "left") {
+                  sibling = node.previousSibling;
+                  regExp = / $/;
+                } else {
+                  sibling = node.nextSibling;
+                  regExp = /^ /;
+                }
 
-              if (typeof input !== "string") {
-                throw new TypeError(input + " is not a string");
+                if (sibling) {
+                  if (sibling.nodeType === 3) {
+                    isFlanked = regExp.test(sibling.nodeValue);
+                  } else if (sibling.nodeType === 1 && !isBlock(sibling)) {
+                    isFlanked = regExp.test(sibling.textContent);
+                  }
+                }
+                return isFlanked;
               }
 
-              // Escape potential ol triggers
-              input = input.replace(/(>[\r\n\s]*)(\d+)\.(&nbsp;| )/g, "$1$2\\.$3");
+              function flankingWhitespace(node) {
+                var leading = "";
+                var trailing = "";
 
-              var clone = htmlToDom(input).body;
-              var nodes = bfsOrder(clone);
-              var output;
+                if (!isBlock(node)) {
+                  var hasLeading = /^[ \r\n\t]/.test(node.innerHTML);
+                  var hasTrailing = /[ \r\n\t]$/.test(node.innerHTML);
 
-              converters = mdConverters.slice(0);
-              if (options.gfm) {
-                converters = gfmConverters.concat(converters);
+                  if (hasLeading && !isFlankedByWhitespace("left", node)) {
+                    leading = " ";
+                  }
+                  if (hasTrailing && !isFlankedByWhitespace("right", node)) {
+                    trailing = " ";
+                  }
+                }
+
+                return { leading: leading, trailing: trailing };
               }
 
-              if (options.converters) {
-                converters = options.converters.concat(converters);
-              }
+              /*
+               * Finds a Markdown converter, gets the replacement, and sets it on
+               * `_replacement`
+               */
 
-              // Process through nodes in reverse (so deepest child elements are first).
-              for (var i = nodes.length - 1; i >= 0; i--) {
-                process(nodes[i]);
-              }
-              output = getContent(clone);
+              function process(node) {
+                var replacement;
+                var content = getContent(node);
 
-              return output
-                .replace(/^[\t\r\n]+|[\t\r\n\s]+$/g, "")
-                .replace(/\n\s+\n/g, "\n\n")
-                .replace(/\n{3,}/g, "\n\n");
-            };
+                // Remove blank nodes
+                if (
+                  !isVoid(node) &&
+                  !/A|TH|TD/.test(node.nodeName) &&
+                  /^\s*$/i.test(content)
+                ) {
+                  node._replacement = "";
+                  return;
+                }
 
-            toMarkdown.isBlock = isBlock;
-            toMarkdown.isVoid = isVoid;
-            toMarkdown.outer = outer;
+                for (var i = 0; i < converters.length; i++) {
+                  var converter = converters[i];
 
-            module.exports = toMarkdown;
-          },
-          { "./lib/gfm-converters": 2, "./lib/html-parser": 3, "./lib/md-converters": 4, "collapse-whitespace": 7 },
-        ],
-        2: [
-          function (require, module, exports) {
-            "use strict";
-
-            function cell(content, node) {
-              var index = Array.prototype.indexOf.call(node.parentNode.childNodes, node);
-              var prefix = " ";
-              if (index === 0) prefix = "| ";
-              return prefix + content + " |";
-            }
-
-            var highlightRegEx = /highlight highlight-(\S+)/;
-
-            module.exports = [
-              {
-                filter: "br",
-                replacement: function () {
-                  return "\n";
-                },
-              },
-              {
-                filter: ["del", "s", "strike"],
-                replacement: function (content) {
-                  return "~~" + content + "~~";
-                },
-              },
-
-              {
-                filter: function (node) {
-                  return node.type === "checkbox" && node.parentNode.nodeName === "LI";
-                },
-                replacement: function (content, node) {
-                  return (node.checked ? "[x]" : "[ ]") + " ";
-                },
-              },
-
-              {
-                filter: ["th", "td"],
-                replacement: function (content, node) {
-                  return cell(content, node);
-                },
-              },
-
-              {
-                filter: "tr",
-                replacement: function (content, node) {
-                  var borderCells = "";
-                  var alignMap = { left: ":--", right: "--:", center: ":-:" };
-
-                  if (node.parentNode.nodeName === "THEAD") {
-                    for (var i = 0; i < node.childNodes.length; i++) {
-                      var align = node.childNodes[i].attributes.align;
-                      var border = "---";
-
-                      if (align) border = alignMap[align.value] || border;
-
-                      borderCells += cell(border, node.childNodes[i]);
+                  if (canConvert(node, converter.filter)) {
+                    if (typeof converter.replacement !== "function") {
+                      throw new TypeError(
+                        "`replacement` needs to be a function that returns a string"
+                      );
                     }
+
+                    var whitespace = flankingWhitespace(node);
+
+                    if (whitespace.leading || whitespace.trailing) {
+                      content = content.trim();
+                    }
+                    replacement =
+                      whitespace.leading +
+                      converter.replacement.call(toMarkdown, content, node) +
+                      whitespace.trailing;
+                    break;
                   }
-                  return "\n" + content + (borderCells ? "\n" + borderCells : "");
-                },
-              },
-
-              {
-                filter: "table",
-                replacement: function (content) {
-                  return "\n\n" + content + "\n\n";
-                },
-              },
-
-              {
-                filter: ["thead", "tbody", "tfoot"],
-                replacement: function (content) {
-                  return content;
-                },
-              },
-
-              // Fenced code blocks
-              {
-                filter: function (node) {
-                  return node.nodeName === "PRE" && node.firstChild && node.firstChild.nodeName === "CODE";
-                },
-                replacement: function (content, node) {
-                  return "\n\n```\n" + node.firstChild.textContent + "\n```\n\n";
-                },
-              },
-
-              // Syntax-highlighted code blocks
-              {
-                filter: function (node) {
-                  return node.nodeName === "PRE" && node.parentNode.nodeName === "DIV" && highlightRegEx.test(node.parentNode.className);
-                },
-                replacement: function (content, node) {
-                  var language = node.parentNode.className.match(highlightRegEx)[1];
-                  return "\n\n```" + language + "\n" + node.textContent + "\n```\n\n";
-                },
-              },
-
-              {
-                filter: function (node) {
-                  return node.nodeName === "DIV" && highlightRegEx.test(node.className);
-                },
-                replacement: function (content) {
-                  return "\n\n" + content + "\n\n";
-                },
-              },
-            ];
-          },
-          {},
-        ],
-        3: [
-          function (require, module, exports) {
-            /*
-             * Set up window for Node.js
-             */
-
-            var _window = typeof window !== "undefined" ? window : this;
-
-            /*
-             * Parsing HTML strings
-             */
-
-            function canParseHtmlNatively() {
-              var Parser = _window.DOMParser;
-              var canParse = false;
-
-              // Adapted from https://gist.github.com/1129031
-              // Firefox/Opera/IE throw errors on unsupported types
-              try {
-                // WebKit returns null on unsupported types
-                if (new Parser().parseFromString("", "text/html")) {
-                  canParse = true;
                 }
-              } catch (e) { }
 
-              return canParse;
-            }
+                node._replacement = replacement;
+              }
 
-            function createHtmlParser() {
-              var Parser = function () { };
+              toMarkdown = function (input, options) {
+                options = options || {};
 
-              // For Node.js environments
-              if (typeof document === "undefined") {
-                var jsdom = require("jsdom");
-                Parser.prototype.parseFromString = function (string) {
-                  return jsdom.jsdom(string, {
-                    features: {
-                      FetchExternalResources: [],
-                      ProcessExternalResources: false,
-                    },
-                  });
-                };
-              } else {
-                if (!shouldUseActiveX()) {
+                if (typeof input !== "string") {
+                  throw new TypeError(input + " is not a string");
+                }
+
+                // Escape potential ol triggers
+                input = input.replace(
+                  /(>[\r\n\s]*)(\d+)\.(&nbsp;| )/g,
+                  "$1$2\\.$3"
+                );
+
+                var clone = htmlToDom(input).body;
+                var nodes = bfsOrder(clone);
+                var output;
+
+                converters = mdConverters.slice(0);
+                if (options.gfm) {
+                  converters = gfmConverters.concat(converters);
+                }
+
+                if (options.converters) {
+                  converters = options.converters.concat(converters);
+                }
+
+                // Process through nodes in reverse (so deepest child elements are first).
+                for (var i = nodes.length - 1; i >= 0; i--) {
+                  process(nodes[i]);
+                }
+                output = getContent(clone);
+
+                return output
+                  .replace(/^[\t\r\n]+|[\t\r\n\s]+$/g, "")
+                  .replace(/\n\s+\n/g, "\n\n")
+                  .replace(/\n{3,}/g, "\n\n");
+              };
+
+              toMarkdown.isBlock = isBlock;
+              toMarkdown.isVoid = isVoid;
+              toMarkdown.outer = outer;
+
+              module.exports = toMarkdown;
+            },
+            {
+              "./lib/gfm-converters": 2,
+              "./lib/html-parser": 3,
+              "./lib/md-converters": 4,
+              "collapse-whitespace": 7,
+            },
+          ],
+          2: [
+            function (require, module, exports) {
+              "use strict";
+
+              function cell(content, node) {
+                var index = Array.prototype.indexOf.call(
+                  node.parentNode.childNodes,
+                  node
+                );
+                var prefix = " ";
+                if (index === 0) prefix = "| ";
+                return prefix + content + " |";
+              }
+
+              var highlightRegEx = /highlight highlight-(\S+)/;
+
+              module.exports = [
+                {
+                  filter: "br",
+                  replacement: function () {
+                    return "\n";
+                  },
+                },
+                {
+                  filter: ["del", "s", "strike"],
+                  replacement: function (content) {
+                    return "~~" + content + "~~";
+                  },
+                },
+
+                {
+                  filter: function (node) {
+                    return (
+                      node.type === "checkbox" &&
+                      node.parentNode.nodeName === "LI"
+                    );
+                  },
+                  replacement: function (content, node) {
+                    return (node.checked ? "[x]" : "[ ]") + " ";
+                  },
+                },
+
+                {
+                  filter: ["th", "td"],
+                  replacement: function (content, node) {
+                    return cell(content, node);
+                  },
+                },
+
+                {
+                  filter: "tr",
+                  replacement: function (content, node) {
+                    var borderCells = "";
+                    var alignMap = { left: ":--", right: "--:", center: ":-:" };
+
+                    if (node.parentNode.nodeName === "THEAD") {
+                      for (var i = 0; i < node.childNodes.length; i++) {
+                        var align = node.childNodes[i].attributes.align;
+                        var border = "---";
+
+                        if (align) border = alignMap[align.value] || border;
+
+                        borderCells += cell(border, node.childNodes[i]);
+                      }
+                    }
+                    return (
+                      "\n" + content + (borderCells ? "\n" + borderCells : "")
+                    );
+                  },
+                },
+
+                {
+                  filter: "table",
+                  replacement: function (content) {
+                    return "\n\n" + content + "\n\n";
+                  },
+                },
+
+                {
+                  filter: ["thead", "tbody", "tfoot"],
+                  replacement: function (content) {
+                    return content;
+                  },
+                },
+
+                // Fenced code blocks
+                {
+                  filter: function (node) {
+                    return (
+                      node.nodeName === "PRE" &&
+                      node.firstChild &&
+                      node.firstChild.nodeName === "CODE"
+                    );
+                  },
+                  replacement: function (content, node) {
+                    return (
+                      "\n\n```\n" + node.firstChild.textContent + "\n```\n\n"
+                    );
+                  },
+                },
+
+                // Syntax-highlighted code blocks
+                {
+                  filter: function (node) {
+                    return (
+                      node.nodeName === "PRE" &&
+                      node.parentNode.nodeName === "DIV" &&
+                      highlightRegEx.test(node.parentNode.className)
+                    );
+                  },
+                  replacement: function (content, node) {
+                    var language =
+                      node.parentNode.className.match(highlightRegEx)[1];
+                    return (
+                      "\n\n```" +
+                      language +
+                      "\n" +
+                      node.textContent +
+                      "\n```\n\n"
+                    );
+                  },
+                },
+
+                {
+                  filter: function (node) {
+                    return (
+                      node.nodeName === "DIV" &&
+                      highlightRegEx.test(node.className)
+                    );
+                  },
+                  replacement: function (content) {
+                    return "\n\n" + content + "\n\n";
+                  },
+                },
+              ];
+            },
+            {},
+          ],
+          3: [
+            function (require, module, exports) {
+              /*
+               * Set up window for Node.js
+               */
+
+              var _window = typeof window !== "undefined" ? window : this;
+
+              /*
+               * Parsing HTML strings
+               */
+
+              function canParseHtmlNatively() {
+                var Parser = _window.DOMParser;
+                var canParse = false;
+
+                // Adapted from https://gist.github.com/1129031
+                // Firefox/Opera/IE throw errors on unsupported types
+                try {
+                  // WebKit returns null on unsupported types
+                  if (new Parser().parseFromString("", "text/html")) {
+                    canParse = true;
+                  }
+                } catch (e) {}
+
+                return canParse;
+              }
+
+              function createHtmlParser() {
+                var Parser = function () {};
+
+                // For Node.js environments
+                if (typeof document === "undefined") {
+                  var jsdom = require("jsdom");
                   Parser.prototype.parseFromString = function (string) {
-                    var doc = document.implementation.createHTMLDocument("");
-                    doc.open();
-                    doc.write(string);
-                    doc.close();
-                    return doc;
+                    return jsdom.jsdom(string, {
+                      features: {
+                        FetchExternalResources: [],
+                        ProcessExternalResources: false,
+                      },
+                    });
                   };
                 } else {
-                  Parser.prototype.parseFromString = function (string) {
-                    var doc = new window.ActiveXObject("htmlfile");
-                    doc.designMode = "on"; // disable on-page scripts
-                    doc.open();
-                    doc.write(string);
-                    doc.close();
-                    return doc;
-                  };
+                  if (!shouldUseActiveX()) {
+                    Parser.prototype.parseFromString = function (string) {
+                      var doc = document.implementation.createHTMLDocument("");
+                      doc.open();
+                      doc.write(string);
+                      doc.close();
+                      return doc;
+                    };
+                  } else {
+                    Parser.prototype.parseFromString = function (string) {
+                      var doc = new window.ActiveXObject("htmlfile");
+                      doc.designMode = "on"; // disable on-page scripts
+                      doc.open();
+                      doc.write(string);
+                      doc.close();
+                      return doc;
+                    };
+                  }
                 }
-              }
-              return Parser;
-            }
-
-            function shouldUseActiveX() {
-              var useActiveX = false;
-
-              try {
-                document.implementation.createHTMLDocument("").open();
-              } catch (e) {
-                if (window.ActiveXObject) useActiveX = true;
+                return Parser;
               }
 
-              return useActiveX;
-            }
+              function shouldUseActiveX() {
+                var useActiveX = false;
 
-            module.exports = canParseHtmlNatively() ? _window.DOMParser : createHtmlParser();
-          },
-          { jsdom: 6 },
-        ],
-        4: [
-          function (require, module, exports) {
-            "use strict";
+                try {
+                  document.implementation.createHTMLDocument("").open();
+                } catch (e) {
+                  if (window.ActiveXObject) useActiveX = true;
+                }
 
-            module.exports = [
-              {
-                filter: "p",
-                replacement: function (content) {
-                  return "\n\n" + content + "\n\n";
-                },
-              },
-
-              {
-                filter: "br",
-                replacement: function () {
-                  return "  \n";
-                },
-              },
-
-              {
-                filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
-                replacement: function (content, node) {
-                  var hLevel = node.nodeName.charAt(1);
-                  var hPrefix = "";
-                  for (var i = 0; i < hLevel; i++) {
-                    hPrefix += "#";
-                  }
-                  return "\n\n" + hPrefix + " " + content + "\n\n";
-                },
-              },
-
-              {
-                filter: "hr",
-                replacement: function () {
-                  return "\n\n* * *\n\n";
-                },
-              },
-
-              {
-                filter: ["em", "i"],
-                replacement: function (content) {
-                  return "_" + content + "_";
-                },
-              },
-
-              {
-                filter: ["strong", "b"],
-                replacement: function (content) {
-                  return "**" + content + "**";
-                },
-              },
-
-              // Inline code
-              {
-                filter: function (node) {
-                  var hasSiblings = node.previousSibling || node.nextSibling;
-                  var isCodeBlock = node.parentNode.nodeName === "PRE" && !hasSiblings;
-
-                  return node.nodeName === "CODE" && !isCodeBlock;
-                },
-                replacement: function (content) {
-                  return "`" + content + "`";
-                },
-              },
-
-              {
-                filter: function (node) {
-                  return node.nodeName === "A" && node.getAttribute("href");
-                },
-                replacement: function (content, node) {
-                  var titlePart = node.title ? ' "' + node.title + '"' : "";
-                  return "[" + content + "](" + node.getAttribute("href") + titlePart + ")";
-                },
-              },
-
-              {
-                filter: "img",
-                replacement: function (content, node) {
-                  var alt = node.alt || "";
-                  var src = node.getAttribute("src") || "";
-                  var title = node.title || "";
-                  var titlePart = title ? ' "' + title + '"' : "";
-                  return src ? "![" + alt + "]" + "(" + src + titlePart + ")" : "";
-                },
-              },
-
-              // Code blocks
-              {
-                filter: function (node) {
-                  return node.nodeName === "PRE" && node.firstChild.nodeName === "CODE";
-                },
-                replacement: function (content, node) {
-                  return "\n\n    " + node.firstChild.textContent.replace(/\n/g, "\n    ") + "\n\n";
-                },
-              },
-
-              {
-                filter: "blockquote",
-                replacement: function (content) {
-                  content = content.trim();
-                  content = content.replace(/\n{3,}/g, "\n\n");
-                  content = content.replace(/^/gm, "> ");
-                  return "\n\n" + content + "\n\n";
-                },
-              },
-
-              {
-                filter: "li",
-                replacement: function (content, node) {
-                  content = content.replace(/^\s+/, "").replace(/\n/gm, "\n    ");
-                  var prefix = "*   ";
-                  var parent = node.parentNode;
-                  var index = Array.prototype.indexOf.call(parent.children, node) + 1;
-
-                  prefix = /ol/i.test(parent.nodeName) ? index + ".  " : "*   ";
-                  return prefix + content;
-                },
-              },
-
-              {
-                filter: ["ul", "ol"],
-                replacement: function (content, node) {
-                  var strings = [];
-                  for (var i = 0; i < node.childNodes.length; i++) {
-                    strings.push(node.childNodes[i]._replacement);
-                  }
-
-                  if (/li/i.test(node.parentNode.nodeName)) {
-                    return "\n" + strings.join("\n");
-                  }
-                  return "\n\n" + strings.join("\n") + "\n\n";
-                },
-              },
-
-              {
-                filter: function (node) {
-                  return this.isBlock(node);
-                },
-                replacement: function (content, node) {
-                  return "\n\n" + content + "\n\n";
-                },
-              },
-
-              // Anything else!
-              {
-                filter: function () {
-                  return true;
-                },
-                replacement: function (content, node) {
-                  return content;
-                },
-              },
-            ];
-          },
-          {},
-        ],
-        5: [
-          function (require, module, exports) {
-            /**
-             * This file automatically generated from `build.js`.
-             * Do not manually edit.
-             */
-
-            module.exports = [
-              "address",
-              "article",
-              "aside",
-              "audio",
-              "blockquote",
-              "canvas",
-              "dd",
-              "div",
-              "dl",
-              "fieldset",
-              "figcaption",
-              "figure",
-              "footer",
-              "form",
-              "h1",
-              "h2",
-              "h3",
-              "h4",
-              "h5",
-              "h6",
-              "header",
-              "hgroup",
-              "hr",
-              "main",
-              "nav",
-              "noscript",
-              "ol",
-              "output",
-              "p",
-              "pre",
-              "section",
-              "table",
-              "tfoot",
-              "ul",
-              "video",
-            ];
-          },
-          {},
-        ],
-        6: [function (require, module, exports) { }, {}],
-        7: [
-          function (require, module, exports) {
-            "use strict";
-
-            var voidElements = require("void-elements");
-            Object.keys(voidElements).forEach(function (name) {
-              voidElements[name.toUpperCase()] = 1;
-            });
-
-            var blockElements = {};
-            require("block-elements").forEach(function (name) {
-              blockElements[name.toUpperCase()] = 1;
-            });
-
-            /**
-             * isBlockElem(node) determines if the given node is a block element.
-             *
-             * @param {Node} node
-             * @return {Boolean}
-             */
-            function isBlockElem(node) {
-              return !!(node && blockElements[node.nodeName]);
-            }
-
-            /**
-             * isVoid(node) determines if the given node is a void element.
-             *
-             * @param {Node} node
-             * @return {Boolean}
-             */
-            function isVoid(node) {
-              return !!(node && voidElements[node.nodeName]);
-            }
-
-            /**
-             * whitespace(elem [, isBlock]) removes extraneous whitespace from an
-             * the given element. The function isBlock may optionally be passed in
-             * to determine whether or not an element is a block element; if none
-             * is provided, defaults to using the list of block elements provided
-             * by the `block-elements` module.
-             *
-             * @param {Node} elem
-             * @param {Function} blockTest
-             */
-            function collapseWhitespace(elem, isBlock) {
-              if (!elem.firstChild || elem.nodeName === "PRE") return;
-
-              if (typeof isBlock !== "function") {
-                isBlock = isBlockElem;
+                return useActiveX;
               }
 
-              var prevText = null;
-              var prevVoid = false;
+              module.exports = canParseHtmlNatively()
+                ? _window.DOMParser
+                : createHtmlParser();
+            },
+            { jsdom: 6 },
+          ],
+          4: [
+            function (require, module, exports) {
+              "use strict";
 
-              var prev = null;
-              var node = next(prev, elem);
+              module.exports = [
+                {
+                  filter: "p",
+                  replacement: function (content) {
+                    return "\n\n" + content + "\n\n";
+                  },
+                },
 
-              while (node !== elem) {
-                if (node.nodeType === 3) {
-                  // Node.TEXT_NODE
-                  var text = node.data.replace(/[ \r\n\t]+/g, " ");
+                {
+                  filter: "br",
+                  replacement: function () {
+                    return "  \n";
+                  },
+                },
 
-                  if ((!prevText || / $/.test(prevText.data)) && !prevVoid && text[0] === " ") {
-                    text = text.substr(1);
-                  }
+                {
+                  filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
+                  replacement: function (content, node) {
+                    var hLevel = node.nodeName.charAt(1);
+                    var hPrefix = "";
+                    for (var i = 0; i < hLevel; i++) {
+                      hPrefix += "#";
+                    }
+                    return "\n\n" + hPrefix + " " + content + "\n\n";
+                  },
+                },
 
-                  // `text` might be empty at this point.
-                  if (!text) {
+                {
+                  filter: "hr",
+                  replacement: function () {
+                    return "\n\n* * *\n\n";
+                  },
+                },
+
+                {
+                  filter: ["em", "i"],
+                  replacement: function (content) {
+                    return "_" + content + "_";
+                  },
+                },
+
+                {
+                  filter: ["strong", "b"],
+                  replacement: function (content) {
+                    return "**" + content + "**";
+                  },
+                },
+
+                // Inline code
+                {
+                  filter: function (node) {
+                    var hasSiblings = node.previousSibling || node.nextSibling;
+                    var isCodeBlock =
+                      node.parentNode.nodeName === "PRE" && !hasSiblings;
+
+                    return node.nodeName === "CODE" && !isCodeBlock;
+                  },
+                  replacement: function (content) {
+                    return "`" + content + "`";
+                  },
+                },
+
+                {
+                  filter: function (node) {
+                    return node.nodeName === "A" && node.getAttribute("href");
+                  },
+                  replacement: function (content, node) {
+                    var titlePart = node.title ? ' "' + node.title + '"' : "";
+                    return (
+                      "[" +
+                      content +
+                      "](" +
+                      node.getAttribute("href") +
+                      titlePart +
+                      ")"
+                    );
+                  },
+                },
+
+                {
+                  filter: "img",
+                  replacement: function (content, node) {
+                    var alt = node.alt || "";
+                    var src = node.getAttribute("src") || "";
+                    var title = node.title || "";
+                    var titlePart = title ? ' "' + title + '"' : "";
+                    return src
+                      ? "![" + alt + "]" + "(" + src + titlePart + ")"
+                      : "";
+                  },
+                },
+
+                // Code blocks
+                {
+                  filter: function (node) {
+                    return (
+                      node.nodeName === "PRE" &&
+                      node.firstChild.nodeName === "CODE"
+                    );
+                  },
+                  replacement: function (content, node) {
+                    return (
+                      "\n\n    " +
+                      node.firstChild.textContent.replace(/\n/g, "\n    ") +
+                      "\n\n"
+                    );
+                  },
+                },
+
+                {
+                  filter: "blockquote",
+                  replacement: function (content) {
+                    content = content.trim();
+                    content = content.replace(/\n{3,}/g, "\n\n");
+                    content = content.replace(/^/gm, "> ");
+                    return "\n\n" + content + "\n\n";
+                  },
+                },
+
+                {
+                  filter: "li",
+                  replacement: function (content, node) {
+                    content = content
+                      .replace(/^\s+/, "")
+                      .replace(/\n/gm, "\n    ");
+                    var prefix = "*   ";
+                    var parent = node.parentNode;
+                    var index =
+                      Array.prototype.indexOf.call(parent.children, node) + 1;
+
+                    prefix = /ol/i.test(parent.nodeName)
+                      ? index + ".  "
+                      : "*   ";
+                    return prefix + content;
+                  },
+                },
+
+                {
+                  filter: ["ul", "ol"],
+                  replacement: function (content, node) {
+                    var strings = [];
+                    for (var i = 0; i < node.childNodes.length; i++) {
+                      strings.push(node.childNodes[i]._replacement);
+                    }
+
+                    if (/li/i.test(node.parentNode.nodeName)) {
+                      return "\n" + strings.join("\n");
+                    }
+                    return "\n\n" + strings.join("\n") + "\n\n";
+                  },
+                },
+
+                {
+                  filter: function (node) {
+                    return this.isBlock(node);
+                  },
+                  replacement: function (content, node) {
+                    return "\n\n" + content + "\n\n";
+                  },
+                },
+
+                // Anything else!
+                {
+                  filter: function () {
+                    return true;
+                  },
+                  replacement: function (content, node) {
+                    return content;
+                  },
+                },
+              ];
+            },
+            {},
+          ],
+          5: [
+            function (require, module, exports) {
+              /**
+               * This file automatically generated from `build.js`.
+               * Do not manually edit.
+               */
+
+              module.exports = [
+                "address",
+                "article",
+                "aside",
+                "audio",
+                "blockquote",
+                "canvas",
+                "dd",
+                "div",
+                "dl",
+                "fieldset",
+                "figcaption",
+                "figure",
+                "footer",
+                "form",
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6",
+                "header",
+                "hgroup",
+                "hr",
+                "main",
+                "nav",
+                "noscript",
+                "ol",
+                "output",
+                "p",
+                "pre",
+                "section",
+                "table",
+                "tfoot",
+                "ul",
+                "video",
+              ];
+            },
+            {},
+          ],
+          6: [function (require, module, exports) {}, {}],
+          7: [
+            function (require, module, exports) {
+              "use strict";
+
+              var voidElements = require("void-elements");
+              Object.keys(voidElements).forEach(function (name) {
+                voidElements[name.toUpperCase()] = 1;
+              });
+
+              var blockElements = {};
+              require("block-elements").forEach(function (name) {
+                blockElements[name.toUpperCase()] = 1;
+              });
+
+              /**
+               * isBlockElem(node) determines if the given node is a block element.
+               *
+               * @param {Node} node
+               * @return {Boolean}
+               */
+              function isBlockElem(node) {
+                return !!(node && blockElements[node.nodeName]);
+              }
+
+              /**
+               * isVoid(node) determines if the given node is a void element.
+               *
+               * @param {Node} node
+               * @return {Boolean}
+               */
+              function isVoid(node) {
+                return !!(node && voidElements[node.nodeName]);
+              }
+
+              /**
+               * whitespace(elem [, isBlock]) removes extraneous whitespace from an
+               * the given element. The function isBlock may optionally be passed in
+               * to determine whether or not an element is a block element; if none
+               * is provided, defaults to using the list of block elements provided
+               * by the `block-elements` module.
+               *
+               * @param {Node} elem
+               * @param {Function} blockTest
+               */
+              function collapseWhitespace(elem, isBlock) {
+                if (!elem.firstChild || elem.nodeName === "PRE") return;
+
+                if (typeof isBlock !== "function") {
+                  isBlock = isBlockElem;
+                }
+
+                var prevText = null;
+                var prevVoid = false;
+
+                var prev = null;
+                var node = next(prev, elem);
+
+                while (node !== elem) {
+                  if (node.nodeType === 3) {
+                    // Node.TEXT_NODE
+                    var text = node.data.replace(/[ \r\n\t]+/g, " ");
+
+                    if (
+                      (!prevText || / $/.test(prevText.data)) &&
+                      !prevVoid &&
+                      text[0] === " "
+                    ) {
+                      text = text.substr(1);
+                    }
+
+                    // `text` might be empty at this point.
+                    if (!text) {
+                      node = remove(node);
+                      continue;
+                    }
+
+                    node.data = text;
+                    prevText = node;
+                  } else if (node.nodeType === 1) {
+                    // Node.ELEMENT_NODE
+                    if (isBlock(node) || node.nodeName === "BR") {
+                      if (prevText) {
+                        prevText.data = prevText.data.replace(/ $/, "");
+                      }
+
+                      prevText = null;
+                      prevVoid = false;
+                    } else if (isVoid(node)) {
+                      // Avoid trimming space around non-block, non-BR void elements.
+                      prevText = null;
+                      prevVoid = true;
+                    }
+                  } else {
                     node = remove(node);
                     continue;
                   }
 
-                  node.data = text;
-                  prevText = node;
-                } else if (node.nodeType === 1) {
-                  // Node.ELEMENT_NODE
-                  if (isBlock(node) || node.nodeName === "BR") {
-                    if (prevText) {
-                      prevText.data = prevText.data.replace(/ $/, "");
-                    }
+                  var nextNode = next(prev, node);
+                  prev = node;
+                  node = nextNode;
+                }
 
-                    prevText = null;
-                    prevVoid = false;
-                  } else if (isVoid(node)) {
-                    // Avoid trimming space around non-block, non-BR void elements.
-                    prevText = null;
-                    prevVoid = true;
+                if (prevText) {
+                  prevText.data = prevText.data.replace(/ $/, "");
+                  if (!prevText.data) {
+                    remove(prevText);
                   }
-                } else {
-                  node = remove(node);
-                  continue;
-                }
-
-                var nextNode = next(prev, node);
-                prev = node;
-                node = nextNode;
-              }
-
-              if (prevText) {
-                prevText.data = prevText.data.replace(/ $/, "");
-                if (!prevText.data) {
-                  remove(prevText);
                 }
               }
-            }
 
-            /**
-             * remove(node) removes the given node from the DOM and returns the
-             * next node in the sequence.
-             *
-             * @param {Node} node
-             * @return {Node} node
-             */
-            function remove(node) {
-              var next = node.nextSibling || node.parentNode;
+              /**
+               * remove(node) removes the given node from the DOM and returns the
+               * next node in the sequence.
+               *
+               * @param {Node} node
+               * @return {Node} node
+               */
+              function remove(node) {
+                var next = node.nextSibling || node.parentNode;
 
-              node.parentNode.removeChild(node);
+                node.parentNode.removeChild(node);
 
-              return next;
-            }
-
-            /**
-             * next(prev, current) returns the next node in the sequence, given the
-             * current and previous nodes.
-             *
-             * @param {Node} prev
-             * @param {Node} current
-             * @return {Node}
-             */
-            function next(prev, current) {
-              if ((prev && prev.parentNode === current) || current.nodeName === "PRE") {
-                return current.nextSibling || current.parentNode;
+                return next;
               }
 
-              return current.firstChild || current.nextSibling || current.parentNode;
-            }
+              /**
+               * next(prev, current) returns the next node in the sequence, given the
+               * current and previous nodes.
+               *
+               * @param {Node} prev
+               * @param {Node} current
+               * @return {Node}
+               */
+              function next(prev, current) {
+                if (
+                  (prev && prev.parentNode === current) ||
+                  current.nodeName === "PRE"
+                ) {
+                  return current.nextSibling || current.parentNode;
+                }
 
-            module.exports = collapseWhitespace;
-          },
-          { "block-elements": 5, "void-elements": 8 },
-        ],
-        8: [
-          function (require, module, exports) {
-            /**
-             * This file automatically generated from `pre-publish.js`.
-             * Do not manually edit.
-             */
+                return (
+                  current.firstChild ||
+                  current.nextSibling ||
+                  current.parentNode
+                );
+              }
 
-            module.exports = {
-              area: true,
-              base: true,
-              br: true,
-              col: true,
-              embed: true,
-              hr: true,
-              img: true,
-              input: true,
-              keygen: true,
-              link: true,
-              menuitem: true,
-              meta: true,
-              param: true,
-              source: true,
-              track: true,
-              wbr: true,
-            };
-          },
-          {},
-        ],
+              module.exports = collapseWhitespace;
+            },
+            { "block-elements": 5, "void-elements": 8 },
+          ],
+          8: [
+            function (require, module, exports) {
+              /**
+               * This file automatically generated from `pre-publish.js`.
+               * Do not manually edit.
+               */
+
+              module.exports = {
+                area: true,
+                base: true,
+                br: true,
+                col: true,
+                embed: true,
+                hr: true,
+                img: true,
+                input: true,
+                keygen: true,
+                link: true,
+                menuitem: true,
+                meta: true,
+                param: true,
+                source: true,
+                track: true,
+                wbr: true,
+              };
+            },
+            {},
+          ],
+        },
+        {},
+        [1]
+      )(1);
+    });
+  </script>
+
+  <script>
+    // http://pandoc.org/README.html#pandocs-markdown
+    const pandoc = [
+      {
+        filter: "h1",
+        replacement: function (content, node) {
+          return `\n\n# ${content}\n\n`;
+        },
       },
-      {},
-      [1],
-    )(1);
-  });
-
-</script>
-
-<script>
-  // http://pandoc.org/README.html#pandocs-markdown
-  const pandoc = [
-    {
-      filter: "h1",
-      replacement: function (content, node) {
-        return `\n\n# ${content}\n\n`
+      {
+        filter: "h2",
+        replacement: function (content, node) {
+          return `\n\n## ${content}\n\n`;
+        },
       },
-    },
-    {
-      filter: "h2",
-      replacement: function (content, node) {
-        return `\n\n## ${content}\n\n`
-
+      {
+        filter: "h3",
+        replacement: function (content, node) {
+          return `\n\n### ${content}\n\n`;
+        },
       },
-    },
-    {
-      filter: "h3",
-      replacement: function (content, node) {
-        return `\n\n### ${content}\n\n`
+      {
+        filter: "h4",
+        replacement: function (content, node) {
+          return `\n\n#### ${content}\n\n`;
+        },
       },
-    },
-    {
-      filter: "h4",
-      replacement: function (content, node) {
-        return `\n\n#### ${content}\n\n`
+      {
+        filter: "h5",
+        replacement: function (content, node) {
+          return `\n\n##### ${content}\n\n`;
+        },
       },
-    },
-    {
-      filter: "h5",
-      replacement: function (content, node) {
-        return `\n\n##### ${content}\n\n`
+      {
+        filter: "sup",
+        replacement: function (content) {
+          return "^" + content + "^";
+        },
       },
-    },
-    {
-      filter: "sup",
-      replacement: function (content) {
-        return "^" + content + "^";
+
+      {
+        filter: "sub",
+        replacement: function (content) {
+          return "~" + content + "~";
+        },
       },
-    },
 
-    {
-      filter: "sub",
-      replacement: function (content) {
-        return "~" + content + "~";
+      {
+        filter: "br",
+        replacement: function () {
+          return "\\\n";
+        },
       },
-    },
 
-    {
-      filter: "br",
-      replacement: function () {
-        return "\\\n";
+      {
+        filter: "hr",
+        replacement: function () {
+          return "\n\n* * * * *\n\n";
+        },
       },
-    },
 
-    {
-      filter: "hr",
-      replacement: function () {
-        return "\n\n* * * * *\n\n";
+      {
+        filter: ["em", "i", "cite", "var"],
+        replacement: function (content) {
+          return "*" + content + "*";
+        },
       },
-    },
 
-    {
-      filter: ["em", "i", "cite", "var"],
-      replacement: function (content) {
-        return "*" + content + "*";
+      {
+        filter: function (node) {
+          const hasSiblings = node.previousSibling || node.nextSibling;
+          const isCodeBlock =
+            node.parentNode.nodeName === "PRE" && !hasSiblings;
+          const isCodeElem =
+            node.nodeName === "CODE" ||
+            node.nodeName === "KBD" ||
+            node.nodeName === "SAMP" ||
+            node.nodeName === "TT";
+          return isCodeElem && !isCodeBlock;
+        },
+        replacement: function (content) {
+          return "`" + content + "`";
+        },
       },
-    },
 
-    {
-      filter: function (node) {
-        const hasSiblings = node.previousSibling || node.nextSibling;
-        const isCodeBlock = node.parentNode.nodeName === "PRE" && !hasSiblings;
-        const isCodeElem = node.nodeName === "CODE" || node.nodeName === "KBD" || node.nodeName === "SAMP" || node.nodeName === "TT";
-        return isCodeElem && !isCodeBlock;
+      {
+        filter: function (node) {
+          return node.nodeName === "A" && node.getAttribute("href");
+        },
+        replacement: function (content, node) {
+          const url = node.getAttribute("href");
+          const titlePart = node.title ? ' "' + node.title + '"' : "";
+          if (content === url) {
+            return "<" + url + ">";
+          } else if (url === "mailto:" + content) {
+            return "<" + content + ">";
+          } else {
+            return "[" + content + "](" + url + titlePart + ")";
+          }
+        },
       },
-      replacement: function (content) {
-        return "`" + content + "`";
+
+      {
+        filter: "li",
+        replacement: function (content, node) {
+          content = content.replace(/^\s+/, "").replace(/\n/gm, "\n");
+          const prefix = "- ";
+          const parent = node.parentNode;
+
+          if (/ol/i.test(parent.nodeName)) {
+            const index =
+              Array.prototype.indexOf.call(parent.children, node) + 1;
+            prefix = index;
+          }
+
+          return prefix + content;
+        },
       },
-    },
+    ];
 
-    {
-      filter: function (node) {
-        return node.nodeName === "A" && node.getAttribute("href");
+    // http://pandoc.org/README.html#smart-punctuation
+    const escapePandoc = function (str) {
+      return str
+        .replace(/[\u2018\u2019\u00b4]/g, "'")
+        .replace(/[\u201c\u201d\u2033]/g, '"')
+        .replace(/[\u2212\u2022\u00b7\u25aa]/g, "-")
+        .replace(/[\u2013\u2015]/g, "--")
+        .replace(/\u2014/g, "---")
+        .replace(/\u2026/g, "...")
+        .replace(/[ ]+\n/g, "\n")
+        .replace(/\s*\\\n/g, "\\\n")
+        .replace(/\s*\\\n\s*\\\n/g, "\n\n")
+        .replace(/\s*\\\n\n/g, "\n\n")
+        .replace(/\n-\n/g, "\n")
+        .replace(/\n\n\s*\\\n/g, "\n\n")
+        .replace(/\n\n\n*/g, "\n\n")
+        .replace(/[ ]+$/gm, "")
+        .replace(/^\s+|[\s\\]+$/g, "");
+    };
+
+    const convertHtmlToMarkdown = function (str) {
+      return escapePandoc(toMarkdown(str, { converters: pandoc, gfm: true }));
+    };
+  </script>
+
+  <script>
+    const output = document.getElementById("output");
+
+    const easyMDE = new EasyMDE({
+      element: document.getElementById("markdown-input"),
+      hideIcons: ["image"],
+      showIcons: ["code", "table"],
+      minHeight: "500px",
+      maxHeight: "750px",
+      spellChecker: true,
+      autofocus: true,
+      sideBySideFullscreen: false,
+      unorderedListStyle: "-",
+      renderingConfig: {
+        singleLineBreaks: true,
       },
-      replacement: function (content, node) {
-        const url = node.getAttribute("href");
-        const titlePart = node.title ? ' "' + node.title + '"' : "";
-        if (content === url) {
-          return "<" + url + ">";
-        } else if (url === "mailto:" + content) {
-          return "<" + content + ">";
-        } else {
-          return "[" + content + "](" + url + titlePart + ")";
-        }
-      },
-    },
-
-    {
-      filter: "li",
-      replacement: function (content, node) {
-        content = content.replace(/^\s+/, "").replace(/\n/gm, "\n");
-        const prefix = "- ";
-        const parent = node.parentNode;
-
-        if (/ol/i.test(parent.nodeName)) {
-          const index = Array.prototype.indexOf.call(parent.children, node) + 1;
-          prefix = index;
-        }
-
-        return prefix + content;
-      },
-    },
-  ];
-
-  // http://pandoc.org/README.html#smart-punctuation
-  const escapePandoc = function (str) {
-    return str
-      .replace(/[\u2018\u2019\u00b4]/g, "'")
-      .replace(/[\u201c\u201d\u2033]/g, '"')
-      .replace(/[\u2212\u2022\u00b7\u25aa]/g, "-")
-      .replace(/[\u2013\u2015]/g, "--")
-      .replace(/\u2014/g, "---")
-      .replace(/\u2026/g, "...")
-      .replace(/[ ]+\n/g, "\n")
-      .replace(/\s*\\\n/g, "\\\n")
-      .replace(/\s*\\\n\s*\\\n/g, "\n\n")
-      .replace(/\s*\\\n\n/g, "\n\n")
-      .replace(/\n-\n/g, "\n")
-      .replace(/\n\n\s*\\\n/g, "\n\n")
-      .replace(/\n\n\n*/g, "\n\n")
-      .replace(/[ ]+$/gm, "")
-      .replace(/^\s+|[\s\\]+$/g, "");
-  };
-
-  const convertHtmlToMarkdown = function (str) {
-    return escapePandoc(toMarkdown(str, { converters: pandoc, gfm: true }));
-  };
-</script>
-
-<script>
-  const output = document.getElementById("output");
-
-  const easyMDE = new EasyMDE({
-    element: document.getElementById("markdown-input"),
-    hideIcons: ["image"],
-    showIcons: ["code", "table"],
-    minHeight: "500px",
-    maxHeight: "750px",
-    spellChecker: true,
-    autofocus: true,
-    sideBySideFullscreen: false,
-    unorderedListStyle: "-",
-    renderingConfig: {
-      singleLineBreaks: true,
-    },
-  });
-
-  const templates = {
-    daily: () => {
-      const divider = "---------------"
-      const timeblocks = "- 09: \n- 10: \n- 11: \n- 12: \n- 13: \n- 14: \n- 15: \n- 16: \n- 17: \n- 18: "
-      const date = new Date().toISOString().slice(0, 10);
-      const template = `${date} daily\n\n${divider}\n\nAGENDA:\n\n${timeblocks}\n\n\nTODO:\n- [] \n- [] \n- [] \n- [] \n- [] \n- [] \n\n\n${divider}\n\nNOTES:\n\n\n\n\n\n${divider}\n\n`;
-      const original = easyMDE.value();
-      const out = `${original}\n\n${template}`
-      easyMDE.value(out)
-    },
-    meetingNotes: () => {
-      const date = new Date().toISOString().slice(0, 10);
-      const template = `**Meeting notes:** \n\n- Participants: \n- Date: ${date}\n\n<br/>\n\n**Agenda & goals:**\n\n\n\n\n\n<br/>\n\n**Notes:**\n\n\n\n\n\n\n<br/>\n\n**AP:**\n\n- \n- \n- \n- \n- `
-      const original = easyMDE.value();
-      const out = `${original}\n\n${template}`
-      easyMDE.value(out)
-    }
-  }
-
-  const stripHtmlComments = (str) => {
-    return str.replace(/<\!--.*?-->/g, "");
-  };
-
-  easyMDE.toggleSideBySide();
-
-  const rtfToMarkdown = async () => {
-    const originalText = easyMDE.value();
-    const clipboardItems = await navigator.clipboard.read({ type: "text/html" });
-
-    for (const clipboardItem of clipboardItems) {
-      for (const type of clipboardItem.types) {
-        const blob = await clipboardItem.getType(type);
-        const blobText = await blob.text();
-        const md = convertHtmlToMarkdown(blobText)
-        easyMDE.value(`${originalText}\n\n${md}`)
-      }
-    }
-  }
-
-  const parse = (addBreaks = false) => {
-    const html = marked.parse(easyMDE.value(), {
-      breaks: true,
-      gfm: true,
     });
 
-    const result = addBreaks
-      ? html.replaceAll("</pre>", "</pre><br/>")
-        .replaceAll("</p>\n<p>", "</p><br/><p>")
-        .replaceAll("\n<h1>", "<br/><h1>")
-        .replaceAll("\n<h2>", "<br/><h2>")
-        .replaceAll("\n<h3>", "<br/><h3>")
-        .replaceAll("\n<h4>", "<br/><h4>")
-        .replaceAll("\n<h5>", "<br/><h5>")
-        .replaceAll("\n<h6>", "<br/><h6>")
-        .replaceAll("</p>\n<strong>\n", "</p><br/><strong>")
-        .replaceAll("</ul>\n<p>", "</ul><br/><p>")
-        .replaceAll("</strong></p><br/><p>", "</strong></p><p>")
-      : html
+    const templates = {
+      daily: () => {
+        const divider = "---------------";
+        const timeblocks =
+          "- 09: \n- 10: \n- 11: \n- 12: \n- 13: \n- 14: \n- 15: \n- 16: \n- 17: \n- 18: ";
+        const date = new Date().toISOString().slice(0, 10);
+        const template = `${date} daily\n\n${divider}\n\nAGENDA:\n\n${timeblocks}\n\n\nTODO:\n- [] \n- [] \n- [] \n- [] \n- [] \n- [] \n\n\n${divider}\n\nNOTES:\n\n\n\n\n\n${divider}\n\n`;
+        const original = easyMDE.value();
+        const out = `${original}\n\n${template}`;
+        easyMDE.value(out);
+      },
+      meetingNotes: () => {
+        const date = new Date().toISOString().slice(0, 10);
+        const template = `**Meeting notes:** \n\n- Participants: \n- Date: ${date}\n\n<br/>\n\n**Agenda & goals:**\n\n\n\n\n\n<br/>\n\n**Notes:**\n\n\n\n\n\n\n<br/>\n\n**AP:**\n\n- \n- \n- \n- \n- `;
+        const original = easyMDE.value();
+        const out = `${original}\n\n${template}`;
+        easyMDE.value(out);
+      },
+    };
 
-    output.innerHTML = result
-  };
+    const stripHtmlComments = (str) => {
+      return str.replace(/<\!--.*?-->/g, "");
+    };
 
-  const copy = (addBreaks = false) => {
-    parse(addBreaks);
-    const withoutComments = stripHtmlComments(output.innerHTML);
-    navigator.clipboard.write([
-      new ClipboardItem({
-        "text/plain": new Blob([output.innerText], { type: "text/plain" }),
-        "text/html": new Blob([withoutComments], { type: "text/html" }),
-      }),
-    ]);
-  };
-</script>
+    easyMDE.toggleSideBySide();
 
+    const rtfToMarkdown = async () => {
+      const originalText = easyMDE.value();
+      const clipboardItems = await navigator.clipboard.read({
+        type: "text/html",
+      });
+
+      for (const clipboardItem of clipboardItems) {
+        for (const type of clipboardItem.types) {
+          const blob = await clipboardItem.getType(type);
+          const blobText = await blob.text();
+          const md = convertHtmlToMarkdown(blobText);
+          easyMDE.value(`${originalText}\n\n${md}`);
+        }
+      }
+    };
+
+    const parse = (addBreaks = false) => {
+      const html = marked.parse(easyMDE.value(), {
+        breaks: true,
+        gfm: true,
+      });
+
+      const result = addBreaks
+        ? html
+            .replaceAll("</pre>", "</pre><br/>")
+            .replaceAll("</p>\n<p>", "</p><br/><p>")
+            .replaceAll("\n<h1>", "<br/><h1>")
+            .replaceAll("\n<h2>", "<br/><h2>")
+            .replaceAll("\n<h3>", "<br/><h3>")
+            .replaceAll("\n<h4>", "<br/><h4>")
+            .replaceAll("\n<h5>", "<br/><h5>")
+            .replaceAll("\n<h6>", "<br/><h6>")
+            .replaceAll("</p>\n<strong>\n", "</p><br/><strong>")
+            .replaceAll("</ul>\n<p>", "</ul><br/><p>")
+            .replaceAll("</strong></p><br/><p>", "</strong></p><p>")
+        : html;
+
+      output.innerHTML = result;
+    };
+
+    const copy = (addBreaks = false) => {
+      parse(addBreaks);
+      const withoutComments = stripHtmlComments(output.innerHTML);
+      navigator.clipboard.write([
+        new ClipboardItem({
+          "text/plain": new Blob([output.innerText], { type: "text/plain" }),
+          "text/html": new Blob([withoutComments], { type: "text/html" }),
+        }),
+      ]);
+    };
+  </script>
 </html>
